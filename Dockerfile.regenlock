@@ -11,5 +11,5 @@ COPY . /w
 # provide those build backends system-wide before locking.
 RUN uv pip install --system --break-system-packages setuptools wheel packaging \
  && uv pip install --system --break-system-packages --index-url https://download.pytorch.org/whl/cpu torch
-RUN UV_NO_BUILD_ISOLATION=1 uv lock --upgrade-package pillow
+RUN uv lock --upgrade-package pillow
 RUN echo "===UVLOCK_BEGIN===" && cat /w/uv.lock && echo "===UVLOCK_END==="
