@@ -6,5 +6,10 @@ RUN curl -LsSf https://astral.sh/uv/0.8.22/install.sh | sh
 ENV PATH="/root/.local/bin:${PATH}"
 WORKDIR /w
 COPY . /w
-RUN uv lock --upgrade-package pillow
+# deep-ep / TE setup.py import setuptools + torch at metadata time and are in
+# uv's no-build-isolation-package list (they use the ambient interpreter), so
+# provide those build backends system-wide before locking.
+RUN uv pip install --system --break-system-packages setuptools wheel packaging \
+ && uv pip install --system --break-system-packages --index-url https://download.pytorch.org/whl/cpu torch
+RUN UV_NO_BUILD_ISOLATION=1 uv lock --upgrade-package pillow
 RUN echo "===UVLOCK_BEGIN===" && cat /w/uv.lock && echo "===UVLOCK_END==="
