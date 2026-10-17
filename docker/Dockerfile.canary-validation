@@ -1,0 +1,17 @@
+# Validation-only wrapper; not part of the Canary fixture PR.
+FROM 766267172432.dkr.ecr.us-east-1.amazonaws.com/nemo-speech@sha256:91160bfcdf6d78f71f787fc6c2193c53adf4bd2301f93365330c9c741301c2e9
+
+# The CI venv points into /root, which is not traversable by workstation UID 65532.
+RUN cp -a /root/.local/share/uv/python /opt/ci-python \
+    && ln -sfn /opt/ci-python/cpython-3.13-linux-x86_64-gnu/bin/python3.13 /opt/venv/bin/python \
+    && sed -i 's|/root/.local/share/uv/python|/opt/ci-python|g' /opt/venv/pyvenv.cfg \
+    && cp -a /root/.local/bin/uv /usr/local/bin/uv \
+    && uv pip install --python /opt/venv/bin/python \
+        pre-commit==4.2.0 black==24.10.0 isort==5.13.2 \
+    && install -d -o 65532 -g 65532 /opt/ci-home /nemo_run
+ENV HOME=/opt/ci-home \
+    XDG_CACHE_HOME=/opt/ci-home/.cache \
+    PRE_COMMIT_HOME=/opt/ci-home/.cache/pre-commit \
+    PATH=/opt/venv/bin:/usr/local/bin:/usr/bin:/bin
+RUN setpriv --reuid=65532 --regid=65532 --clear-groups \
+    sh -ec 'python --version; python -c "import torch, pytest, black, isort, pre_commit"; test -w "$HOME"; test -w /nemo_run'
