@@ -1,0 +1,16 @@
+FROM 766267172432.dkr.ecr.us-east-1.amazonaws.com/nemo-speech@sha256:1db6ccb5c4db40cf9aece23388459f9070b617d25b1c2792831b7f4e9fb913cd
+# Runtime-only tools for Speech pre-commit hooks; no product build inputs change.
+# .pre-commit-config.yaml: c78069a41baac2c40c1bbdeab48c2a0faf9d8276
+# docker/Dockerfile: 4cca70d89f3a6a45ffeb573f2949f94601b270c3
+RUN cp -a /root/.local/share/uv/python/cpython-3.13-linux-x86_64-gnu /opt/validation-python \
+    && cp -a /root/.local/bin/uv /usr/local/bin/uv \
+    && uv venv --python /opt/validation-python/bin/python3.13 /opt/validation-venv \
+    && uv pip install --python /opt/validation-venv/bin/python pre-commit==4.2.0 PyYAML==6.0.2 \
+    && /opt/validation-venv/bin/python -c 'import yaml, pre_commit; print(yaml.__version__)'
+ENV PATH="/opt/validation-venv/bin:/usr/local/bin:${PATH}"
+USER 65532:65532
+ENV HOME=/tmp
+RUN /opt/validation-venv/bin/python -c 'import yaml, pre_commit; print(yaml.__version__)' \
+    && pre-commit --version \
+    && uv --version \
+    && test -w /tmp
